@@ -1,5 +1,5 @@
-import * as mongodb from "mongodb";
-import { Employee } from "./employee";
+import * as mongodb from 'mongodb';
+import { Employee } from './employee';
 
 export const collections: {
     employees?: mongodb.Collection<Employee>;
@@ -9,10 +9,10 @@ export async function connectToDatabase(uri: string) {
     const client = new mongodb.MongoClient(uri);
     await client.connect();
 
-    const db = client.db("meanStackExample");
+    const db = client.db('meanStackExample');
     await applySchemaValidation(db);
 
-    const employeesCollection = db.collection<Employee>("employees");
+    const employeesCollection = db.collection<Employee>('employees');
     collections.employees = employeesCollection;
 }
 
@@ -21,36 +21,56 @@ export async function connectToDatabase(uri: string) {
 async function applySchemaValidation(db: mongodb.Db) {
     const jsonSchema = {
         $jsonSchema: {
-            bsonType: "object",
-            required: ["name", "position", "level"],
+            bsonType: 'object',
+            required: ['name', 'position', 'level'],
             additionalProperties: false,
             properties: {
                 _id: {},
                 name: {
-                    bsonType: "string",
+                    bsonType: 'string',
                     description: "'name' is required and is a string",
                 },
                 position: {
-                    bsonType: "string",
+                    bsonType: 'string',
                     description: "'position' is required and is a string",
-                    minLength: 5
+                    minLength: 5,
                 },
                 level: {
-                    bsonType: "string",
+                    bsonType: 'string',
                     description: "'level' is required and is one of 'junior', 'mid', or 'senior'",
-                    enum: ["junior", "mid", "senior"],
+                    enum: ['junior', 'mid', 'senior'],
                 },
             },
         },
     };
 
-    // Try applying the modification to the collection, if the collection doesn't exist, create it 
-   await db.command({
-        collMod: "employees",
-        validator: jsonSchema
-    }).catch(async (error: mongodb.MongoServerError) => {
-        if (error.codeName === "NamespaceNotFound") {
-            await db.createCollection("employees", {validator: jsonSchema});
-        }
-    });
+    // Try applying the modification to the collection, if the collection doesn't exist, create it
+    await db
+        .command({
+            collMod: 'employees',
+            validator: jsonSchema,
+        })
+        .catch(async (error: mongodb.MongoServerError) => {
+            if (error.codeName === 'NamespaceNotFound') {
+                await db.createCollection('employees', { validator: jsonSchema });
+            }
+        });
 }
+/*
+https://bilalalghazi.medium.com/multi-lingual-data-modeling-with-mongodb-4d552bdf3b6c
+{
+  "id": "1",
+  "sku": "1234567",
+  "price": "9.99",
+  "translations": {
+    "en": {
+      "name": "Product name in English",
+      "description": "Product description in English"
+    },
+    "es": {
+      "name": "Product name in Spanish",
+      "description": "Product description in Spanish"
+    }
+  }
+}
+*/
